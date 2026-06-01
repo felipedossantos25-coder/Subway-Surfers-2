@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Subway Surfers</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #87CEEB;
+    font-family: Arial, sans-serif;
+}
+
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: #87CEEB;
+}
+
+#player {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: red;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 10px;
+}
+
+.obstacle, .coin {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+}
+
+.obstacle {
+    background: brown;
+}
+
+.coin {
+    background: gold;
+}
+
+#ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+    text-shadow: 2px 2px 2px black;
+}
+</style>
+</head>
+<body>
+
+<div id="game">
+    <div id="ui">Moedas: <span id="score">0</span></div>
+    <div id="player"></div>
+</div>
+
+<script>
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const scoreEl = document.getElementById("score");
+
+let playerLane = 1; // 0 = esquerda, 1 = centro, 2 = direita
+const lanes = [window.innerWidth/2 - 100, window.innerWidth/2, window.innerWidth/2 + 100];
+let score = 0;
+
+const obstacles = [];
+const coins = [];
+
+// Criar obstáculos e moedas aleatoriamente
+function spawnObject(type){
+    const obj = document.createElement('div');
+    obj.className = type;
+    obj.style.bottom = window.innerHeight + 'px';
+    
+    const lane = Math.floor(Math.random()*3);
+    obj.style.left = lanes[lane] + 'px';
+    
+    game.appendChild(obj);
+    
+    if(type === 'obstacle') obstacles.push(obj);
+    else coins.push(obj);
+}
+
+// Movimentação do jogador
+document.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowLeft' && playerLane > 0) playerLane--;
+    if(e.key === 'ArrowRight' && playerLane < 2) playerLane++;
+    
+    player.style.left = lanes[playerLane] + 'px';
+});
+
+// Loop do jogo
+function update(){
+    // Spawn aleatório
+    if(Math.random() < 0.02) spawnObject('obstacle');
+    if(Math.random() < 0.02) spawnObject('coin');
+
+    // Movimentar obstáculos e moedas
+    obstacles.forEach((ob,i)=>{
+        let bottom = parseInt(ob.style.bottom);
+        bottom -= 5;
+        ob.style.bottom = bottom + 'px';
+        // colisão
+        const playerRect = player.getBoundingClientRect();
+        const obRect = ob.getBoundingClientRect();
+        if(playerRect.left < obRect.right &&
+           playerRect.right > obRect.left &&
+           playerRect.top < obRect.bottom &&
+           playerRect.bottom > obRect.top){
+            alert("💥 Game Over! Pontuação: " + score);
+            location.reload();
+        }
+        if(bottom < -50){
+            ob.remove();
+            obstacles.splice(i,1);
+        }
+    });
+
+    coins.forEach((c,i)=>{
+        let bottom = parseInt(c.style.bottom);
+        bottom -= 5;
+        c.style.bottom = bottom + 'px';
+        const playerRect = player.getBoundingClientRect();
+        const cRect = c.getBoundingClientRect();
+        if(playerRect.left < cRect.right &&
+           playerRect.right > cRect.left &&
+           playerRect.top < cRect.bottom &&
+           playerRect.bottom > cRect.top){
+            score++;
+            scoreEl.textContent = score;
+            c.remove();
+            coins.splice(i,1);
+        }
+        if(bottom < -50){
+            c.remove();
+            coins.splice(i,1);
+        }
+    });
+
+    requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>
